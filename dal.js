@@ -7,14 +7,14 @@ MongoClient.connect(url, {useUnifiedTopology: true}, function(err, client) {
     console.log("Connected successfully to db server");
 
     // connect to myproject database
-    db = client.db('myproject');
+    db = client.db('bad_bank');
 });
 
 // create user account
 function create(name, email, password){
     return new Promise((resolve, reject) => {    
         const collection = db.collection('users');
-        const doc = {name, email, password, balance: 0};
+        const doc = {name, email, password, balance: 0, transactions:[]};
         collection.insertOne(doc, {w:1}, function(err, result) {
             err ? reject(err) : resolve(doc);
         });    

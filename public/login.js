@@ -1,22 +1,26 @@
 function Login(){
   const [show, setShow]     = React.useState(true);
-  const [status, setStatus] = React.useState('');    
-
+  const [status, setStatus] = React.useState(''); 
+  const [user, setUser] = React.useState('');
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  
   return (
     <Card
       bgcolor="secondary"
       header="Login"
       status={status}
+      user={user}
+      isLoggedIn={isLoggedIn}
       body={show ? 
-        <LoginForm setShow={setShow} setStatus={setStatus}/> :
-        <LoginMsg setShow={setShow} setStatus={setStatus}/>}
+        <LoginForm setShow={setShow} setStatus={setStatus} setUser={setUser} setIsLoggedIn={setIsLoggedIn}/> :
+        <LoginMsg setShow={setShow} setStatus={setStatus} setUser={setUser}  user={user} setIsLoggedIn={setIsLoggedIn} />}
     />
   ) 
 }
 
 function LoginMsg(props){
   return(<>
-    <h5>Success</h5>
+    <h5>Success {props.user}</h5>
     <button type="submit" 
       className="btn btn-light" 
       onClick={() => props.setShow(true)}>
@@ -28,35 +32,39 @@ function LoginMsg(props){
 function LoginForm(props){
   const [email, setEmail]       = React.useState('');
   const [password, setPassword] = React.useState('');
-
+  
+  
   function handle() {
     const url = 'http://localhost:4000/login'
-    const loginInfo = { "email": "", "password": "" };
+    const loginInfo = { email: "", password: "" };
     loginInfo.email = email;
     loginInfo.password = password;
-    console.log(loginInfo)
     const requestOptions = {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
-        'Content-Type': 'application/json;'
+        'Content-Type': 'application/json'
         
       },
-      body: JSON.stringify({"email":"logan.gelzer@gmail.com", "password":"test"}),
+      body: JSON.stringify(loginInfo),
     }
-    console.log(requestOptions)
+  
     fetch(url, requestOptions)
-    .then(response => console.log(response))
+    .then(response => response.text())
     .then(text => {
-        try {
+      try {
             const data = JSON.parse(text);
-            props.setStatus('');
+            props.setStatus('Welcome '+ data.userName);
             props.setShow(false);
+            localStorage.setItem('token', data.refreshToken)
+            localStorage.setItem('email', data.email)
+            props.setUser(data.userName);
+            props.setIsLoggedIn(true);
             console.log('JSON:', data);
         } catch(err) {
             props.setStatus(text)
-            console.log('err:', err);
+            console.log('err:', text);
         }
+      
     });
   }
 

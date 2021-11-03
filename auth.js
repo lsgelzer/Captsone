@@ -1,7 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
-const dal     = require('./dal.js');
+const dal = require('./dal.js');
+const cors = require('cors');
 
 const app = express();
 
@@ -11,33 +12,43 @@ const refreshTokenSecret = 'somerandomstringforrefreshtoken';
 
 const refreshTokens = [];
 
+app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended:false}));
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
 
 app.post('/login', async (req, res) => {
     console.log(req.body)
     // read username and password from request body
     const {email, password} = req.body
     
-    
+   
     // filter user from the users array by email and password
     const users = await dal.find(u => { return u.email === email && u.password === password });
     const user = users.find(u => { return u.email === email && u.password === password });
     console.log(user)
     if (user) {
         // generate an access token
-        const accessToken = jwt.sign({ email: user.email, role: user.role }, accessTokenSecret, { expiresIn: '20m' });
-        const refreshToken = jwt.sign({ email: user.email, role: user.role }, refreshTokenSecret);
-
+        const accessToken = jwt.sign({ email: user.email }, accessTokenSecret, { expiresIn: '20m' });
+        const refreshToken = jwt.sign({ email: user.email }, refreshTokenSecret);
+        const userName = user.name;
         refreshTokens.push(refreshToken);
 
         res.json({
             accessToken,
-            refreshToken
+            refreshToken,
+            email,
+            password,
+            userName
+            
+
         });
+        console.log(refreshTokens)
     } else {
         res.send('Username or password incorrect');
     }
+    
 });
 
 app.post('/token', (req, res) => {
@@ -56,7 +67,7 @@ app.post('/token', (req, res) => {
             return res.sendStatus(403);
         }
 
-        const accessToken = jwt.sign({ username: user.username, role: user.role }, accessTokenSecret, { expiresIn: '20m' });
+        const accessToken = jwt.sign({ username: user.username }, accessTokenSecret, { expiresIn: '20m' });
 
         res.json({
             accessToken
